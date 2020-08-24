@@ -1,0 +1,156 @@
+
+## Multi-channel breakout from an audio file
+ffmpeg -i /Users/glusk/Public/TestPatterns/DCP/DOLBY-51-CHANNEL-ID_TST_F_EN-XX_INT_51_2K_20110629_DLB/51_ID_F_b230fea5-8ab9-41ae-8109-f712892dc9c5_a.mxf  -map_channel 0.0.0 1-left.wav -map_channel 0.0.1 2-right.wav -map_channel 0.0.2 3-center.wav -map_channel 0.0.3 4-sub.wav -map_channel 0.0.4 5-leftSurround.wav -map_channel 0.0.5 6-rightSurround.wav
+
+ffmpeg -i /Users/glusk/Public/TestPatterns/DCP/DOLBY-51-CHANNEL-ID_TST_F_EN-XX_INT_51_2K_20110629_DLB/51_ID_F_b230fea5-8ab9-41ae-8109-f712892dc9c5_a.mxf  -map_channel 0.0.0 1-left.wav -map_channel 0.0.1 2-right.wav -map_channel 0.0.2 3-center.wav -map_channel 0.0.3 4-sub.wav -map_channel 0.0.4 5-leftSurround.wav -map_channel 0.0.5 6-rightSurround.wav -map_channel 0.0.6 7-channel.wav -map_channel 0.0.7 8-channel.wav -map_channel 0.0.8 9-channel.wav -map_channel 0.0.9 10-channel.wav -map_channel 0.0.10 11-channel.wav -map_channel 0.0.11 12-channel.wav -map_channel 0.0.12 13-channel.wav -map_channel 0.0.13 14-channel.wav -map_channel 0.0.14 15-channel.wav -map_channel 0.0.15 16-channel.wav
+
+## Multi-channel breakout from a video file with 2 audio tracks (video stream 0, stereo stream 1, AC3 stream 2)
+ffmpeg -i /Volumes/Samoas/Videos\ Musica/THECOMPLEXSURROUND-1.m4v   -map_channel 0.2.0 1-left.wav -map_channel 0.2.1 2-right.wav -map_channel 0.2.2 3-center.wav -map_channel 0.2.3 4-sub.wav -map_channel 0.2.4 5-leftSurround.wav -map_channel 0.2.5 6-rightSurround.wav
+
+ 
+ffmpeg -i /Users/glusk/Public/TestPatterns/DCP/DOLBY-51-CHANNEL-ID_TST_F_EN-XX_INT_51_2K_20110629_DLB/51_ID_F_973f4c74-595f-46c5-b5bc-0d4501778564_v.mxf -c:v prores video.mov
+ 
+ffmpeg -i /Users/glusk/Public/TestPatterns/DCP/DOLBY-51-CHANNEL-ID_TST_F_EN-XX_INT_51_2K_20110629_DLB/51_ID_F_973f4c74-595f-46c5-b5bc-0d4501778564_v.mxf -vf scale=1920:-1 -c:v libx264 video.mov
+
+## mux 16 channel files in to a 16-channel wav
+ffmpeg -i 1-left.wav -i 2-right.wav -i 3-center.wav -i 4-sub.wav -i 5-leftSurround.wav -i 6-rightSurround.wav -i 7-channel.wav -i 8-channel.wav -i 9-channel.wav -i 10-channel.wav -i 11-channel.wav -i 12-channel.wav -i 13-channel.wav -i 14-channel.wav -i 15-channel.wav -i 16-channel.wav -filter_complex "[0:a][1:a][2:a][3:a][4:a][5:a][6:a][7:a][8:a][9:a][10:a][11:a][12:a][13:a][14:a][15:a]amerge=inputs=16[aout]" -map "[aout]" output.wav
+
+## DCP mxf files in XYZ to HD h.264 420
+ffmpeg -i [filenamefor_vid.mxf] -i [filenamefor_aud.mxf] -c:v libx264 -pix_fmt yuv420p -vf "scale=-1:1920" -profile slow -crf 21 -ac 2 outputFilename.mp4
+
+## DCP mxf files in XYZ to ProRes 422 LT
+ffmpeg -i [filenamefor_vid.mxf] -i [filenamefor_aud.mxf] -c:v prores_ks -profile:v 1 -pix_fmt yuv422p10le -c:a pcm_s24le outputFilename.mov
+
+## Convert left and right views into a frame-sequential video
+ffmpeg -i LEFT -i RIGHT -filter_complex framepack=frameseq OUTPUT
+
+## Convert views into a side-by-side video with the same output resolution as the input
+ffmpeg -i LEFT -i RIGHT -filter_complex [0:v]scale=w=iw/2[left],[1:v]scale=w=iw/2[right],[left][right]framepack=sbs OUTPUT
+
+## Scale to 720p
+ffmpeg -i /Users/glusk/Desktop/PumpkinsLookingBacknForth_2015/PumpkinsLookingBacknForth_Candle_BlkBknd.mp4 -vf scale=-1:720 /Volumes/TAXI/PumpkinsLookingBacknForth_Candle_BlkBknd_scaled.mp4
+
+## 720x480 to 4:3
+ffmpeg -ss 350 -i /Volumes/NO\ NAME/VIDEO/DVREC/SPOT11_000018.AVI -aspect 4:3 Desktop/test.mp4
+
+## video to frames
+ffmpeg -i /Users/Shared/Synchromesh/4K60/smple_4k.mp4 smple_4k-%04d.png
+## crop the frames to UHD and then make double-wide using ImageMagick
+for file in *.png; do convert \( $file -crop 3840x2160+128x0 -background '#0008' -fill white -gravity center -size 1200x600 caption:"Left\nside" -gravity center -composite \) \( $file -crop 3840x2160+0x0 -background '#0008' -fill white -gravity center -size 1200x600 caption:"Right\nside" -gravity center -composite \) +append UND2Xcap/$file; done
+for file in *.png; do convert \( $file -crop 3840x2160+128x0 \) \( $file -crop 3840x2160+128x0 \) +append UHD2X/$file; done
+
+## add text to a video stream
+ffmpeg -f video4linux2 -i /dev/video0 -s 640x480 -r 30 -vf "drawtext=fontfile=/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans-Bold.ttf: text='\%T': fontcolor=white@0.8: x=7: y=460" -vcodec libx264 -vb 2000k -preset ultrafast -f mp4 output.mp4
+
+## add text to an image
+convert -background '#0008' -fill white -gravity center -size 1200x600 caption:"Left side" $file +swap -gravity center -composite test/$file
+
+## frames to video
+## -vcodec prores -profile:v 1 # 0=proxy 1=LT 2=normal 3=HQ
+ffmpeg -framerate 60 -i Evening\ Scene\ 02_TechTest-%04d.png -r 60 -vcodec prores -profile:v 1 ../Evening\ Scene\ 02_ffProRes60.mov
+ffmpeg -start_number 100 -i image-%03d.png video.webm
+ffmpeg -start_number 00 -framrate 60 -i input_file-%04d.png -filter:v "crop=4096:2160:0:0" -vcodec png -pix_fmt rgba64be output_name.mov
+## frames to tiled frame
+montage Test.???.png -mode Concatenate -tile 4x3 out.png
+
+## concatenate videos
+for f in ./*.mp4; do echo "file '$f'" >> mylist.txt; done
+ffmpeg -f concat -i mylist.txt -c copy output.mp4
+
+## resize then crop frames
+for file in *.png; do convert $file -resize 150% big/big-$file; done
+for file in *.png; do convert $file -gravity center -crop 2880x1200+0+0 cropped/crop-$file; done
+
+## Demux video and audio streams
+ffmpeg -i THECOMPLEXSURROUND-1.m4v -c:a copy -map 0:2 THECOMPLEXSURROUND-1.ac3
+ffmpeg -i THECOMPLEXSURROUND-1.m4v -c:v copy -map 0:0 THECOMPLEXSURROUND-1video.m4v
+## Remux
+ffmpeg -i THECOMPLEXSURROUND-1video.m4v -i THECOMPLEXSURROUND-1.ac3 -acodec copy -vcodec copy /Volumes/GLUSK/THECOMPLEXSURROUND-1.m4v
+
+## alpha channel
+ffmpeg -i AE_Alpha_samples_170412/qts/green\ text_ST-001.mov -vf alphaextract,format=yuv420p output-alpha.mov
+
+## convert Yuneec flightlog to GPX
+converttoqpx.py -i Telemetry_00060.csv -t gpx -o Telemetry_00060.gpx
+
+## add exif date from file modify date, add 7 hours, then add GPS coordinates from file
+exiftool '-datetimeoriginal<filemodifydate' YUN*.jpg
+exiftool -DateTimeOriginal+=7 *.jpg
+exiftool -geotag=flightlog-00066.gpx ./YUN*.jpg
+
+exiftool -datetimeoriginal='2017:10:01 10:37:00' YUN00018a.jpg
+
+## Get the size of input video:
+eval $(ffprobe -v error -of flat=s=_ -select_streams v:0 -show_entries stream=height,width ${SourceFile})
+SourceHres=${streams_stream_0_width}
+SourceVres=${streams_stream_0_height}
+
+## Make AJA KiPro video
+ffmpeg -i /Users/glusk/Public/TestPatterns/BarsTone1.mov -c:v prores_ks -acodec pcm_s24le -ar 48000 ~/Desktop/BarsToneProres.mov
+
+## Make Hap and HapQ
+ffmpeg -i /Users/glusk/Desktop/In-ProRes.mov -vcodec hap -format hap_q -an ~/Desktop/workdir/Out-HapQ.mov -vf "scale=iw/2:ih/2" -vcodec hap -format hap_q -an ~/Desktop/workdir/Out-HapQ_proxy1.mov -vn -acodec pcm_s24le -ar 48000 ~/Desktop/workdir/Out-audio.wav
+
+## Blackmagic Hyperdeck Mini
+ffmpeg -i /Users/glusk/Public/Entertainment/Artbeats\ HD\ Library\ Demo\ Reel.mov -c:v prores_ks -profile:v 0 -vendor ap10 -pix_fmt yuv422p10le -s 1920x1080 -r 29.97 -c:a pcm_s24le -ar 48000  /Volumes/Media/Artbeats-PR422PX.mov
+ffmpeg -i /Users/glusk/Public/Entertainment/Artbeats\ HD\ Library\ Demo\ Reel.mov -c:v prores_ks -profile:v 4444 -qscale:v 11 -vendor ap10 -pix_fmt yuva444p10le -s 1920x1080 -r 29.97 -c:a pcm_s24le -ar 48000  /Volumes/Media/Artbeats-PR4444.mov
+
+## 8K to widescreen scale/crop
+ffmpeg -i /Volumes/BigMagic-HD2/Synchromesh/8K/The\ REAL\ 8K\ -\ Moments\ in\ Detail\ _\ Samsung-Vw3UI0YjeAQ.webm -t 30 -vf crop=7680:1646:0:1337,scale=5376:1152 -c:v prores_ks -profile:v 1 -pix_fmt yuv422p10le -r 29.97 -c:a pcm_s24le ~/Desktop/test5376x1152.mov
+
+## Convert to HapQ, half-size HapQ, and audio in three commands 
+ffmpeg -i /Users/glusk/Desktop/workdir/In.mp4 -vcodec hap -format hap_q -an ~/Desktop/workdir/Out-HapQ.mov
+ffmpeg -i /Users/glusk/Desktop/workdir/In.mp4 -vf "scale=iw/2:ih/2" -vcodec hap -format hap_q -an ~/Desktop/workdir/Out-HapQ_proxy1.mov
+ffmpeg -i /Users/glusk/Desktop/workdir/In.mp4 -vn -acodec pcm_s24le -ar 44100 ~/Desktop/workdir/Out-audio.wav
+
+## Convert to HapQ, half-size HapQ, and audio in one ffmpeg command 
+ffmpeg -i /Users/glusk/Desktop/workdir/In.mp4 \
+   -vcodec hap -format hap_q -an ~/Desktop/workdir/Out-HapQ.mov \
+   -vf "scale=iw/2:ih/2" -vcodec hap -format hap_q -an ~/Desktop/workdir/Out-HapQ_proxy1.mov \
+   -vn -acodec pcm_s24le -ar 44100 ~/Desktop/workdir/Out-audio.wav
+
+## Audio streaming server (multicast)
+ffmpeg -f avfoundation -list_devices true -i ""
+ffmpeg -f avfoundation -i ":0" -acodec libmp3lame -ab 32k -ac 1 -f rtp rtp://234.5.5.5:1234
+
+## Multichannel wav to four stereo wav
+ffmpeg -i in.wav  -map_channel 0.0.0 -map_channel 0.0.1 out12.wav -map_channel 0.0.2 -map_channel 0.0.3 out34.wav -map_channel 0.0.4 -map_channel 0.0.5 out56.wav -map_channel 0.0.6? -map_channel 0.0.7? out78.wav
+
+## RTMP streaming
+## Video source (connects to server)
+#ffmpeg -f avfoundation -r 30 -s "1280x720" -i "0:0" -i /Users/glusk/Public/Entertainment/smileyhangloose.png -filter_complex "[0:v][1:v] overlay=25:25" -acodec aac -vcodec libx264 -tune zerolatency -crf 18 -f flv rtmp://192.168.3.211:1234
+ffmpeg -f avfoundation -i "0:0" -acodec aac -vcodec libx264 -tune zerolatency -crf 18 -f flv rtmp://192.168.3.211:1234
+## listen for video and pipe to player
+#ffmpeg -listen 1 -i rtmp://192.168.3.211:1234 -c copy -f flv - | /Applications/VLC.app/Contents/MacOS/VLC -
+ffmpeg -listen 1 -i rtmp://0.0.0.0:1234 -c copy -f flv - | ffplay -fs -i - 
+
+## HLS re-streaming
+## make these files on your web server and load with http://localhost/live/streaming.m3u8
+ffmpeg -i rtsp://glusk:SnackTime@192.168.3.97/live \
+     -c:v libx264 -pix_fmt yuv420p -crf 21 -preset veryfast \
+     -c:a aac -b:a 128k -ac 2 \
+     -f hls -hls_time 4 -hls_wrap 10 streaming.m3u8
+
+ffmpeg -r 30 -s "1280x720" -f avfoundation -i "1:0" -c:v libx264 -pix_fmt yuv420p -crf 21 -preset veryfast -c:a aac -b:a 128k -ac 2 -f hls -hls_time 4 -hls_wrap 10 /Volumes/Public/stream/streaming.m3u8
+
+## Grab a single frame from an RTSP stream (-y to overwrite file without asking)
+ffmpeg -y -rtsp_transport tcp -i rtsp://glusk:SnackTime@192.168.3.97/live -frames:v 1 webcam.png
+
+## animated GIF
+ffmpeg -i DE6853D2-C87C-4C0C-9134-783259491B7D.MP4 -filter_complex "[0:v] palettegen" palette.png
+ffmpeg -i DE6853D2-C87C-4C0C-9134-783259491B7D.MP4 -i palette.png -filter_complex "[0:v][1:v] paletteuse" result.gif
+
+## Ross Carbonite Clip Player
+ffmpeg -i Untitled2.mov -r 29.97 -pix_fmt yuv420p -vf scale=1920:1080 -c:v libx264 -profile:v baseline -level:v 4.0 Untitled2.mp4
+
+## Bars and tone to udp ts stream
+ffmpeg -f lavfi -re -i smptebars=duration=300:size=1280x720:rate=30 -f lavfi -re -i sine=frequency=1000:duration=60:sample_rate=44100 -pix_fmt yuv420p -c:v libx264 -b:v 1000k -g 30 -keyint_min 120 -profile:v baseline -preset veryfast -f mpegts "udp://127.0.0.1:1234?pkt_size=1316"
+
+## camera to udp ts stream to srt listening for a connection
+## https://github.com/Haivision/srt/blob/master/docs/srt-live-transmit.md
+ffmpeg -f avfoundation -r 30 -s "1280x720" -i "1:2" -pix_fmt yuv420p -c:v libx264 -b:v 1000k -g 30 -keyint_min 120 -profile:v baseline -preset veryfast -f mpegts "udp://127.0.0.1:1234?pkt_size=1316"
+srt-live-transmit udp://:1234 srt://:5000 -v
+
+## srt listen for connection and send to udp
+srt-live-transmit srt://:5000 udp://127.0.0.1:1234 -v
+ffplay udp://127.0.0.1:1234
