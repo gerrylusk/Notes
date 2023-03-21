@@ -39,6 +39,9 @@ ffmpeg -i /Users/Shared/Synchromesh/4K60/smple_4k.mp4 smple_4k-%04d.png
 for file in *.png; do convert \( $file -crop 3840x2160+128x0 -background '#0008' -fill white -gravity center -size 1200x600 caption:"Left\nside" -gravity center -composite \) \( $file -crop 3840x2160+0x0 -background '#0008' -fill white -gravity center -size 1200x600 caption:"Right\nside" -gravity center -composite \) +append UND2Xcap/$file; done
 for file in *.png; do convert \( $file -crop 3840x2160+128x0 \) \( $file -crop 3840x2160+128x0 \) +append UHD2X/$file; done
 
+## video to 16-bit png
+ffmpeg -i ../input.mov -pix_fmt rgba64be output_%04d.png -map "0:a" -c:a pcm_s24le -ar 48000 output.wav
+
 ## add text to a video stream
 ffmpeg -f video4linux2 -i /dev/video0 -s 640x480 -r 30 -vf "drawtext=fontfile=/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans-Bold.ttf: text='\%T': fontcolor=white@0.8: x=7: y=460" -vcodec libx264 -vb 2000k -preset ultrafast -f mp4 output.mp4
 
@@ -50,6 +53,9 @@ convert -background '#0008' -fill white -gravity center -size 1200x600 caption:"
 ffmpeg -framerate 60 -i Evening\ Scene\ 02_TechTest-%04d.png -r 60 -vcodec prores -profile:v 1 ../Evening\ Scene\ 02_ffProRes60.mov
 ffmpeg -start_number 100 -i image-%03d.png video.webm
 ffmpeg -start_number 00 -framrate 60 -i input_file-%04d.png -filter:v "crop=4096:2160:0:0" -vcodec png -pix_fmt rgba64be output_name.mov
+## non-sequential
+ffmpeg -r 24 -pattern_type glob -i ~/Desktop/untitled/*.JPG out.mov
+
 ## frames to tiled frame
 montage Test.???.png -mode Concatenate -tile 4x3 out.png
 
@@ -69,6 +75,7 @@ ffmpeg -i THECOMPLEXSURROUND-1video.m4v -i THECOMPLEXSURROUND-1.ac3 -acodec copy
 
 ## alpha channel
 ffmpeg -i AE_Alpha_samples_170412/qts/green\ text_ST-001.mov -vf alphaextract,format=yuv420p output-alpha.mov
+ffmpeg -i ~/Public/TestPatterns/Alpha/AE_Alpha_samples_170412/qts/green\ text_ST-001.mov -filter_complex '[0:v]pad=iw*2:ih[int];[0:v]alphaextract[alpha];[int][alpha]overlay=W/2:0[vid]' -map '[vid]' output.mov
 
 ## convert Yuneec flightlog to GPX
 converttoqpx.py -i Telemetry_00060.csv -t gpx -o Telemetry_00060.gpx
@@ -79,6 +86,12 @@ exiftool -DateTimeOriginal+=7 *.jpg
 exiftool -geotag=flightlog-00066.gpx ./YUN*.jpg
 
 exiftool -datetimeoriginal='2017:10:01 10:37:00' YUN00018a.jpg
+
+## ImageMagick convert all PNG to JPG
+for a in *.png; do convert "$a" "$(echo $a | sed 's/png/jpg/')"; done
+
+## ImageMagick stitch two images
+convert image1.png image2.png +append output.png
 
 ## Get the size of input video:
 eval $(ffprobe -v error -of flat=s=_ -select_streams v:0 -show_entries stream=height,width ${SourceFile})
@@ -101,13 +114,13 @@ ffmpeg -i /Volumes/BigMagic-HD2/Synchromesh/8K/The\ REAL\ 8K\ -\ Moments\ in\ De
 ## Convert to HapQ, half-size HapQ, and audio in three commands 
 ffmpeg -i /Users/glusk/Desktop/workdir/In.mp4 -vcodec hap -format hap_q -an ~/Desktop/workdir/Out-HapQ.mov
 ffmpeg -i /Users/glusk/Desktop/workdir/In.mp4 -vf "scale=iw/2:ih/2" -vcodec hap -format hap_q -an ~/Desktop/workdir/Out-HapQ_proxy1.mov
-ffmpeg -i /Users/glusk/Desktop/workdir/In.mp4 -vn -acodec pcm_s24le -ar 44100 ~/Desktop/workdir/Out-audio.wav
+ffmpeg -i /Users/glusk/Desktop/workdir/In.mp4 -vn -acodec pcm_s24le -ar 48000 ~/Desktop/workdir/Out-audio.wav
 
 ## Convert to HapQ, half-size HapQ, and audio in one ffmpeg command 
 ffmpeg -i /Users/glusk/Desktop/workdir/In.mp4 \
    -vcodec hap -format hap_q -an ~/Desktop/workdir/Out-HapQ.mov \
    -vf "scale=iw/2:ih/2" -vcodec hap -format hap_q -an ~/Desktop/workdir/Out-HapQ_proxy1.mov \
-   -vn -acodec pcm_s24le -ar 44100 ~/Desktop/workdir/Out-audio.wav
+   -vn -acodec pcm_s24le -ar 48000 ~/Desktop/workdir/Out-audio.wav
 
 ## Audio streaming server (multicast)
 ffmpeg -f avfoundation -list_devices true -i ""
@@ -119,7 +132,7 @@ ffmpeg -i in.wav  -map_channel 0.0.0 -map_channel 0.0.1 out12.wav -map_channel 0
 ## RTMP streaming
 ## Video source (connects to server)
 #ffmpeg -f avfoundation -r 30 -s "1280x720" -i "0:0" -i /Users/glusk/Public/Entertainment/smileyhangloose.png -filter_complex "[0:v][1:v] overlay=25:25" -acodec aac -vcodec libx264 -tune zerolatency -crf 18 -f flv rtmp://192.168.3.211:1234
-ffmpeg -f avfoundation -i "0:0" -acodec aac -vcodec libx264 -tune zerolatency -crf 18 -f flv rtmp://192.168.3.211:1234
+ffmpeg -f avfoundation -i "0:0" -acodec aac -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -crf 18 -f flv rtmp://192.168.3.211:1234
 ## listen for video and pipe to player
 #ffmpeg -listen 1 -i rtmp://192.168.3.211:1234 -c copy -f flv - | /Applications/VLC.app/Contents/MacOS/VLC -
 ffmpeg -listen 1 -i rtmp://0.0.0.0:1234 -c copy -f flv - | ffplay -fs -i - 
@@ -143,14 +156,85 @@ ffmpeg -i DE6853D2-C87C-4C0C-9134-783259491B7D.MP4 -i palette.png -filter_comple
 ## Ross Carbonite Clip Player
 ffmpeg -i Untitled2.mov -r 29.97 -pix_fmt yuv420p -vf scale=1920:1080 -c:v libx264 -profile:v baseline -level:v 4.0 Untitled2.mp4
 
+## Ross Carbonite Media Wipe
+ffmpeg -i Riverbed-v7.mov Riverbed-v7_%04d.png -map "0:a" -c:a pcm_s24le -ar 48000 Riverbed-v7.wav
+
 ## Bars and tone to udp ts stream
 ffmpeg -f lavfi -re -i smptebars=duration=300:size=1280x720:rate=30 -f lavfi -re -i sine=frequency=1000:duration=60:sample_rate=44100 -pix_fmt yuv420p -c:v libx264 -b:v 1000k -g 30 -keyint_min 120 -profile:v baseline -preset veryfast -f mpegts "udp://127.0.0.1:1234?pkt_size=1316"
 
 ## camera to udp ts stream to srt listening for a connection
 ## https://github.com/Haivision/srt/blob/master/docs/srt-live-transmit.md
 ffmpeg -f avfoundation -r 30 -s "1280x720" -i "1:2" -pix_fmt yuv420p -c:v libx264 -b:v 1000k -g 30 -keyint_min 120 -profile:v baseline -preset veryfast -f mpegts "udp://127.0.0.1:1234?pkt_size=1316"
+ffmpeg -f avfoundation -r 30 -s "1280x720" -i "1:1" -pix_fmt yuv420p -c:v libx264 -b:v 1000k -g 30 -keyint_min 120 -profile:v baseline -preset veryfast -c:a aac -b:a 128k -ac 2 -f mpegts "udp://127.0.0.1:1234?pkt_size=1316"
 srt-live-transmit udp://:1234 srt://:5000 -v
 
 ## srt listen for connection and send to udp
 srt-live-transmit srt://:5000 udp://127.0.0.1:1234 -v
 ffplay udp://127.0.0.1:1234
+
+## export movie to frames, convert to black/transparent, crop, resize, extend
+ffmpeg -ss 29.166 -t 7 -i ../Video\ Toaster\ -\ Best\ Wipes-123367178.mov KikiWindowShade_%04d.png
+for file in *.png; do convert $file -brightness-contrast -30x50 -fuzz 80% -transparent white -crop 1366x1066+12+2 -resize 1920x1080 -background transparent -gravity center -extent 1920x1080 modified/$file; done
+
+## combine a subtitle track with existing video and audio and output an mp4
+ffmpeg -i A\ Firefly\ Journey.mp4 -i A\ Firefly\ Journey.vtt -c:v copy -c:a copy -c:s mov_text -metadata:s:s:0 language=eng firefly-cap.mp4
+
+## Concatenate multiple video files
+for a in *.mp4; do echo file $a >> mylist.txt; done
+ffmpeg -f concat -i mylist.txt -c:v copy -an record.mp4
+
+## Blurred wings
+ffmpeg -i input.png -vf 'split[original][copy];[copy]scale=ih*16/9:-1,crop=h=iw*9/16,gblur=sigma=20[blurred];[blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2' ~/Desktop/output.png
+ffmpeg -i IMG_4386.mp4 -vf 'split[original][copy];[copy]scale=ih*16/9:-1,crop=h=iw*9/16,gblur=sigma=20[blurred];[blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2' -c:a copy ~/Desktop/output.mp4
+
+## audio waveform overlay
+ffmpeg -i input.mov -filter_complex "[0:a]showwaves=s=1280x200:mode=cline:rate=25:scale=sqrt,format=yuv420p[wav];[0:v][wav]overlay[out]" -map "[out]" -map 0:a output_wav.mp4
+
+## Convert to animation
+ffmpeg -i TakeItem0008.avi -c:v qtrle out.mov
+ffmpeg -r 59.94 -i PreShow\ v1/PreShow_%05d.png -r 30 -c:v qtrle PreShow_v1.mov
+
+## 360fly or other spherical camera to equirect
+ffmpeg -i ~/Movies/360flyLibrary.360flyLibrary/Spherical\ Phun.mp4 -vf v360=fisheye:ih_fov=240:iv_fov=240:e:pitch=-90 out.mp4 
+
+## Timecode burn
+## this will find the frame rate and add text to each frame starting at 0
+frame_rate=$(ffprobe -i STUDIO2_S001_S001_T002_ISO4.MOV -show_streams 2>&1|grep fps|sed "s/.*, \([0-9.]*\) fps,.*/\1/") 
+ffmpeg -i STUDIO2_S001_S001_T002_ISO4.MOV -vf drawtext="fontsize=15:fontfile=/Library/Fonts/Arial\ Unicode.ttf:timecode='00\:00\:00\;00':rate="$frame_rate":text='TCR\:':fontsize=72:fontcolor='white':boxcolor=0x000000AA:box=1:x=860-text_w/2:y=960" -pix_fmt yuv420p ~/Desktop/STUDIO2_S001_S001_T002_ISO4_TCBURN.MP4
+## find starting timecode
+tc_start=$(ffprobe -i STUDIO2_S001_S001_T002_ISO4.MOV -show_streams 2>&1 | grep "TAG:timecode" | sed -e "s/.*=//" -e "s/\:/\\\:/g" -e "s/\;/\\\;/g")
+## convert 59.94 to 29.97 and burn in timecode at 30
+ffmpeg -i STUDIO2_S001_S001_T002_ISO1.MOV -filter_complex "[0:v]framerate=29.97[RATE];[RATE]drawtext=fontsize=15:fontfile=/Library/Fonts/Arial\ Unicode.ttf:timecode='$tc_start':rate=30:text='TCR\ ':fontsize=72:fontcolor='white':boxcolor=0x000000AA:box=1:x=860-text_w/2:y=960[TCBURN]" -map "[TCBURN]" -map 0:a -pix_fmt yuv420p ~/Desktop/movie-TCBURN.mp4
+## or don't convert and burn timecode at 60
+ffmpeg -i STUDIO2_S001_S001_T002_ISO1.MOV -filter_complex "[0:v]drawtext=fontsize=15:fontfile=/Library/Fonts/Arial\ Unicode.ttf:timecode='$tc_start':rate=60:text='TCR\ ':fontsize=72:fontcolor='white':boxcolor=0x000000AA:box=1:x=860-text_w/2:y=960[TCBURN]" -map "[TCBURN]" -map 0:a -pix_fmt yuv420p ~/Desktop/movie-TCBURN.mp4
+
+## tile an image to a specified size
+convert -size 3840x2160 tile:3881183.png out.png
+
+## Raspberry Pi play audio (why does this work?)
+SDL_AUDIODRIVER="alsa" AUDIODEV="hw:0,0" ffplay Love_Shack.mp3
+SDL_AUDIODRIVER="alsa" AUDIODEV="hw:0,0" ffplay -nodisp -volume 100 http://17963.live.streamtheworld.com:80/KITSFMAAC_SC
+
+## Colour-space Profiles
+## Range
+-color_range tv (limited range)
+-color_range pc (full range)
+## Colour transfer
+-color_trc bt709
+-color_trc bt2020-10 (for 10-bit)
+-color_trc smpte2084 (PQ)
+-color_trc arib-std-b67 (HLG)
+## Colorspace
+-colorspace bt709
+-colorspace bt2020nc
+## Colour primaries
+-color_primaries bt709
+-color_primaries bt2020
+## Convert a video to 10-Bit HEVC using Rec709 standard with full range:
+ffmpeg -i input.mov -pix_fmt yuv420p10le -color_primaries bt709 -color_trc bt709 -colorspace bt709 -color_range pc -crf 18 -vcodec libx265 -tag:v hvc1 -movflags +write_colr -movflags faststart output.mp4
+
+## Convert a video to 10-Bit HEVC using Rec709 standard with full range:
+ffmpeg -i input.mov -pix_fmt yuv420p10le -color_primaries 1 -color_trc 1 -colorspace 1 -color_range 2 -crf 18 -vcodec libx265 -tag:v hvc1 -movflags +write_colr -movflags +faststart output.mp4
+
+## time-offset a stream like audio delay
+ffmpeg -i "movie.mp4" -itsoffset 3.84 -i "movie.mp4" -map 0:v -map 1:a -c copy "movie-audio-delayed.mp4"
