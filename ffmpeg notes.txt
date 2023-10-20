@@ -190,6 +190,9 @@ ffmpeg -i IMG_4386.mp4 -vf 'split[original][copy];[copy]scale=ih*16/9:-1,crop=h=
 ## audio waveform overlay
 ffmpeg -i input.mov -filter_complex "[0:a]showwaves=s=1280x200:mode=cline:rate=25:scale=sqrt,format=yuv420p[wav];[0:v][wav]overlay[out]" -map "[out]" -map 0:a output_wav.mp4
 
+## video waveform overlay
+ffplay out.mp4 -vf "split=2[a][b],[b]waveform=filter=lowpass:scale=ire:graticule=green:flags=numbers+dots:bgopacity=.6[bb],[a][bb]overlay"
+
 ## Convert to animation
 ffmpeg -i TakeItem0008.avi -c:v qtrle out.mov
 ffmpeg -r 59.94 -i PreShow\ v1/PreShow_%05d.png -r 30 -c:v qtrle PreShow_v1.mov
