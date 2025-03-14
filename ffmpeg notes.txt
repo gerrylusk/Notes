@@ -77,6 +77,9 @@ ffmpeg -i THECOMPLEXSURROUND-1video.m4v -i THECOMPLEXSURROUND-1.ac3 -acodec copy
 ffmpeg -i AE_Alpha_samples_170412/qts/green\ text_ST-001.mov -vf alphaextract,format=yuv420p output-alpha.mov
 ffmpeg -i ~/Public/TestPatterns/Alpha/AE_Alpha_samples_170412/qts/green\ text_ST-001.mov -filter_complex '[0:v]pad=iw*2:ih[int];[0:v]alphaextract[alpha];[int][alpha]overlay=W/2:0[vid]' -map '[vid]' output.mov
 
+## alpha channel add cut and fill
+ffmpeg -i Grid-A-952x816\ -\ fill.png -i Grid-A-952x816\ -\ cut.png -filter_complex '[0:v:0][1:v:0]alphamerge[out]' -map '[out]' Grid-A-952x816-alpha.png
+
 ## convert Yuneec flightlog to GPX
 converttoqpx.py -i Telemetry_00060.csv -t gpx -o Telemetry_00060.gpx
 
@@ -92,6 +95,7 @@ for a in *.png; do convert "$a" "$(echo $a | sed 's/png/jpg/')"; done
 
 ## ImageMagick stitch two images
 convert image1.png image2.png +append output.png
+magick -background black -gravity center Grid-A-952x816.png Grid-B-2448x1088.png +smush 0 out.png
 
 ## Get the size of input video:
 eval $(ffprobe -v error -of flat=s=_ -select_streams v:0 -show_entries stream=height,width ${SourceFile})
@@ -196,6 +200,7 @@ ffplay out.mp4 -vf "split=2[a][b],[b]waveform=filter=lowpass:scale=ire:graticule
 ## Convert to animation
 ffmpeg -i TakeItem0008.avi -c:v qtrle out.mov
 ffmpeg -r 59.94 -i PreShow\ v1/PreShow_%05d.png -r 30 -c:v qtrle PreShow_v1.mov
+ffmpeg -i TakeItem0008.avi -vcodec prores_ks -pix_fmt yuva444p10le -profile:v 4444 out.mov
 
 ## 360fly or other spherical camera to equirect
 ffmpeg -i ~/Movies/360flyLibrary.360flyLibrary/Spherical\ Phun.mp4 -vf v360=fisheye:ih_fov=240:iv_fov=240:e:pitch=-90 out.mp4 
@@ -207,7 +212,7 @@ ffmpeg -i STUDIO2_S001_S001_T002_ISO4.MOV -vf drawtext="fontsize=15:fontfile=/Li
 ## find starting timecode
 tc_start=$(ffprobe -i STUDIO2_S001_S001_T002_ISO4.MOV -show_streams 2>&1 | grep "TAG:timecode" | sed -e "s/.*=//" -e "s/\:/\\\:/g" -e "s/\;/\\\;/g")
 ## convert 59.94 to 29.97 and burn in timecode at 30
-ffmpeg -i STUDIO2_S001_S001_T002_ISO1.MOV -filter_complex "[0:v]framerate=29.97[RATE];[RATE]drawtext=fontsize=15:fontfile=/Library/Fonts/Arial\ Unicode.ttf:timecode='$tc_start':rate=30:text='TCR\ ':fontsize=72:fontcolor='white':boxcolor=0x000000AA:box=1:x=860-text_w/2:y=960[TCBURN]" -map "[TCBURN]" -map 0:a -pix_fmt yuv420p ~/Desktop/movie-TCBURN.mp4
+ffmpeg -i STUDIO2_S001_S001_T002_ISO1.MOV -filter_complex "[0:v]framerate=29.97[RATE];[RATE]drawtext=fontsize=15:fontfile=/System/Library/Fonts/Monaco.ttf:timecode='$tc_start':rate=30:text='TCR\ ':fontsize=72:fontcolor='white':boxcolor=0x000000AA:box=1:x=860-text_w/2:y=960[TCBURN]" -map "[TCBURN]" -map 0:a -pix_fmt yuv420p ~/Desktop/movie-TCBURN.mp4
 ## or don't convert and burn timecode at 60
 ffmpeg -i STUDIO2_S001_S001_T002_ISO1.MOV -filter_complex "[0:v]drawtext=fontsize=15:fontfile=/Library/Fonts/Arial\ Unicode.ttf:timecode='$tc_start':rate=60:text='TCR\ ':fontsize=72:fontcolor='white':boxcolor=0x000000AA:box=1:x=860-text_w/2:y=960[TCBURN]" -map "[TCBURN]" -map 0:a -pix_fmt yuv420p ~/Desktop/movie-TCBURN.mp4
 
@@ -241,3 +246,9 @@ ffmpeg -i input.mov -pix_fmt yuv420p10le -color_primaries 1 -color_trc 1 -colors
 
 ## time-offset a stream like audio delay
 ffmpeg -i "movie.mp4" -itsoffset 3.84 -i "movie.mp4" -map 0:v -map 1:a -c copy "movie-audio-delayed.mp4"
+
+## subtitles captions
+ffmpeg -i /Volumes/GLUSK/workdir3pm/Sitting\ on\ Chrome.mp4  -i /Volumes/GLUSK/workdir3pm/Sitting\ on\ Chrome.m4a -vf subtitles=/Volumes/GLUSK/workdir3pm/Sitting\ on\ Chrome-en-US.vtt  ./SittingOnChrome-openCaptions.mp4
+
+## Alpha merge
+ffmpeg -i SpaceDoor.mov -i SpaceDoor\ Alpha.mov -filter_complex "[0:v][1:v]alphamerge" -c:v hap -format hap_alpha ~/Desktop/SpaceDoor_HAP-A.mov
