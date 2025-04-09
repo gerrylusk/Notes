@@ -1,0 +1,110 @@
+The following catagories are with a bit of opinion.
+
+-------------------------
+Slides Apps:
+-------------------------
+
+Keynote
+- Mac only
+- made for slides
+- single screen only
+- can do ratios other than 16:9
+- presenter view on extra output
+- simple output options
+- no time remaining information on videos
+
+Power Point
+- Mac or Win
+- made for slides
+- single screen only
+- can do ratios other than 16:9
+- presenter view on extra output
+- on Mac, more than two outputs (internal screen, main output, presenter output) are difficult
+- no time remaining information on videos
+
+Google Slides
+- Web based
+- main output is web browser in "full screen"
+- presenter view is second web browser window
+- internet required
+
+-------------------------
+Broadcast Apps:
+-------------------------
+
+XPression
+- made for titles
+- SDI w/ transparency
+- 16:9 only
+- specific codec / file format
+
+Vmix
+- Win only
+- made for camera inputs, titles, videos
+- random access, click to play
+- can output to SDI interface (including audio and transparency)
+- nearly any codec / file format
+- time elapsed / remaining per video
+
+-------------------------
+Video Players:
+-------------------------
+
+Qlab
+- Mac only
+- simple list of videos
+- easy to configure output
+- multiple screens
+- multiple outputs
+- can do ratios other than 16:9
+- can output to SDI interface (including audio and transparency)
+- nearly any codec / file format
+- time elapsed / remaining per video
+
+Mitti
+- Mac only
+- simple list of videos
+- easy to configure output
+- single screen / output only
+- random access, click to play
+- can output to SDI interface (including audio and transparency)
+- nearly any codec / file format
+- time elapsed / remaining per video
+
+-------------------------
+Media Servers:
+-------------------------
+
+Resolume
+- Mac
+- Artistic features
+
+Millumin
+- Mac only
+- hybrid timeline / list
+- more complex output options
+- multiple screens
+- multiple outputs
+- can do ratios other than 16:9
+- can output to SDI interface (including audio and transparency)
+- nearly any codec / file format
+- time elapsed / remaining per video
+
+Pixera
+- Win only
+- timeline only
+- complex screens, outputs
+- can output to SDI, NDI, ArtNet, sACN, etc
+- can output one screen across multiple outputs in sync
+- 3D preview space
+- multiple timeline layers
+- multiple timelines
+- layers can have video and audio effects
+- layers can be controlled by ArtNet
+- layers can be controlled by timecode
+- multichannel audio from separate layers
+- timecode output
+- should be very specific codec / file format 
+
+Disguise
+- OMG
