@@ -71,6 +71,15 @@ Mitti
 - nearly any codec / file format
 - time elapsed / remaining per video
 
+Play Deck
+- Win only
+- simple list of videos
+- easy to configure output
+- single screen / output only
+- random access, click to play
+- can output to SDI interface (including audio and transparency)
+- time elapsed / remaining per video
+
 -------------------------
 Media Servers:
 -------------------------
