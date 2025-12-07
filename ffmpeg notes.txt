@@ -136,6 +136,8 @@ ffmpeg -i in.wav  -map_channel 0.0.0 -map_channel 0.0.1 out12.wav -map_channel 0
 ## RTMP streaming
 ## Video source (connects to server)
 #ffmpeg -f avfoundation -r 30 -s "1280x720" -i "0:0" -i /Users/glusk/Public/Entertainment/smileyhangloose.png -filter_complex "[0:v][1:v] overlay=25:25" -acodec aac -vcodec libx264 -tune zerolatency -crf 18 -f flv rtmp://192.168.3.211:1234
+ffmpeg -f lavfi -re -i smptebars=duration=300:size=1280x720:rate=30 -f lavfi -re -i sine=frequency=1000:duration=60:sample_rate=44100 -acodec aac -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -crf 18 -f flv rtmp://sf.liveboxdigital.com:1935/live/stream
+
 ffmpeg -f avfoundation -i "0:0" -acodec aac -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -crf 18 -f flv rtmp://192.168.3.211:1234
 ## listen for video and pipe to player
 #ffmpeg -listen 1 -i rtmp://192.168.3.211:1234 -c copy -f flv - | /Applications/VLC.app/Contents/MacOS/VLC -
@@ -252,3 +254,7 @@ ffmpeg -i /Volumes/GLUSK/workdir3pm/Sitting\ on\ Chrome.mp4  -i /Volumes/GLUSK/w
 
 ## Alpha merge
 ffmpeg -i SpaceDoor.mov -i SpaceDoor\ Alpha.mov -filter_complex "[0:v][1:v]alphamerge" -c:v hap -format hap_alpha ~/Desktop/SpaceDoor_HAP-A.mov
+
+## mkv to ProRes LT (multichannel audio, HDR OK)
+ffmpeg -i /Volumes/MobileMedia/The\ Matrix/The_Matrix.mkv -c:v prores_ks -profile:v 1 -pix_fmt yuv422p10le -c:a pcm_s24le -map 0:v:0 -map 0:a:2 /Volumes/GLUSK/Matrix.mov
+
